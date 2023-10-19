@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import streamlit as st
 from babel.numbers import format_currency
+from sklearn.cluster import KMeans
+
 sns.set(style='dark')
 
 # JUDUL
@@ -13,10 +15,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-hour = pd.read_csv("day.csv")
-hour.head()
-
-day = pd.read_csv("hour.csv")
+day = pd.read_csv("day.csv")
 day.head()
 
 st.write('<div style="text-align: center;">Analisis Peminjaman Sepeda.',
@@ -24,49 +23,45 @@ st.write('<div style="text-align: center;">Analisis Peminjaman Sepeda.',
 
 # Pilih Pertanyaan
 option = st.selectbox('Pilih Pertanyaan:', ('',
-                      'Apakah jenis hari (hari libur, hari kerja, dan hari biasa) mempengaruhi peminjaman sepeda?', 'Apakah cuaca mempengaruhi peminjaman sepeda?'))
+                      ' Apakah jenis hari (holiday, weekday, workingday) mempengaruhi peminjaman sepeda?', 'Apakah cuaca(weathersit) mempengaruhi peminjaman sepeda?'))
 
 if option == 'Apakah cuaca mempengaruhi peminjaman sepeda?':
-    # Analisis untuk DAY
-    plt.figure(figsize=(10, 6))
-    sns.histplot(data=day, x='cnt', hue='weathersit', bins=20, kde=True)
-    plt.xlabel('Jumlah Peminjaman Sepeda (cnt)')
-    plt.title('Distribusi Jumlah Peminjaman Sepeda berdasarkan Cuaca (DAY)')
-    st.pyplot(plt.gcf())
-    st.write('Berdasarkan hasil visualisasi dataset DAY diatas, cuaca (weathersit) mempengaruhi peminjaman sepeda, dimana sepeda paling banyak dipinjam saat cuaca 1, diikuti cuaca 2, dan cuaca 3 sedikit, cuaca 4 sangat sedikit')
+    # Clustering
+    X = day[['weathersit']]
+    n_clusters = 3
+    kmeans = KMeans(n_clusters=n_clusters, random_state=0)
+    kmeans.fit(X)
+    day['cluster'] = kmeans.labels_
 
-  # Analisis untuk HOUR
-    plt.figure(figsize=(10, 6))
-    sns.histplot(data=hour, x='cnt', hue='weathersit', bins=20, kde=True)
-    plt.xlabel('Jumlah Peminjaman Sepeda (cnt)')
-    plt.title('Distribusi Jumlah Peminjaman Sepeda berdasarkan Cuaca (HOUR)')
-    st.pyplot(plt.gcf())
-    st.write('Berdasarkan hasil visualisasi dataset HOUR diatas, cuaca (weathersit) mempengaruhi peminjaman sepeda, dimana sepeda paling banyak dipinjam saat cuaca 1, diikuti cuaca 2, dan cuaca 3 sedikit')
+    # Visualisasi histogram peminjaman sepeda berdasarkan cuaca di setiap kluster
+    plt.figure(figsize=(12, 6))
+
+    # Loop melalui setiap kluster
+    for cluster in day['cluster'].unique():
+        plt.subplot(1, n_clusters, cluster + 1)
+    plt.hist(day[day['cluster'] == cluster]['weathersit'],
+             bins=4, range=(1, 4), rwidth=0.8)
+    plt.xlabel('Cuaca (weathersit)')
+    plt.ylabel('Jumlah Peminjaman Sepeda')
+    plt.title(f'Kluster {cluster + 1}')
+    plt.suptitle(
+        'Histogram Peminjaman Sepeda Berdasarkan Cuaca di Setiap Kluster')
+    plt.show()
+
+    st.write('Berdasarkan visualisasi data, cuaca (weathersit) mempengaruhi peminjaman sepeda, dimana saat cuaca 1 sepeda paling banyak dipinjam, diikuti cuaca 2, dan cuaca 3 sedikit, cuaca 4 tidak ada peminjaman sepeda.')
 
 elif option == 'Apakah jenis hari (hari libur, hari kerja, dan hari biasa) mempengaruhi peminjaman sepeda?':
     day['jenis_hari'] = day.apply(lambda row: 'Hari Libur' if row['holiday'] == 1 else (
         'Hari Kerja' if row['workingday'] == 1 else 'Hari Biasa'), axis=1)
 
-    # Analisis untuk DAY
-    st.write("DAY")
+    # Menampilkan distribusi jumlah peminjaman sepeda berdasarkan jenis hari
     plt.figure(figsize=(10, 6))
     sns.histplot(data=day, x='cnt', hue='jenis_hari', bins=20, kde=True)
     plt.xlabel('Jumlah Peminjaman Sepeda (cnt)')
-    plt.title('Distribusi Jumlah Peminjaman Sepeda berdasarkan Jenis Hari (DAY)')
-    st.pyplot(plt.gcf())
+    plt.title('Distribusi Jumlah Peminjaman Sepeda berdasarkan Jenis Hari')
+    plt.show()
 
-    hour['jenis_hari'] = hour.apply(lambda row: 'Hari Libur' if row['holiday'] == 1 else (
-        'Hari Kerja' if row['workingday'] == 1 else 'Hari Biasa'), axis=1)
-
-    # Analisis untuk HOUR
-    st.write("HOUR")
-    plt.figure(figsize=(10, 6))
-    sns.histplot(data=hour, x='cnt', hue='jenis_hari', bins=20, kde=True)
-    plt.xlabel('Jumlah Peminjaman Sepeda (cnt)')
-    plt.title('Distribusi Jumlah Peminjaman Sepeda berdasarkan Jenis Hari (HOUR)')
-    st.pyplot(plt.gcf())
-
-    st.write('Berdasarkan hasil visualisasi data, jenis hari mempengaruhi peminjaman sepeda. Dimana saat hari kerja peminjaman sepeda banyak dilakukan, diikuti dengan hari biasa dan hari libur.')
+    st.write('Berdasarkan visualisasi data, jenis hari mempengaruhi peminjaman sepeda. Dimana saat hari kerja peminjaman sepeda banyak dilakukan, diikuti dengan hari biasa dan hari libur.')
 
 else:
     # KOSONG
