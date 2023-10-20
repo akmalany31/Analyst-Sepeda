@@ -2,12 +2,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import streamlit as st
-from babel.numbers import format_currency
 from sklearn.cluster import KMeans
 
-sns.set(style='dark')
+st.set_option('deprecation.showPyplotGlobalUse', False)
 
-# JUDUL
 st.markdown(
     """
     <h1 style="text-align: center;">Dashboard Peminjaman Sepeda</h1>
@@ -16,16 +14,18 @@ st.markdown(
 )
 
 day = pd.read_csv("day.csv")
-day.head()
 
 st.write('<div style="text-align: center;">Analisis Peminjaman Sepeda.',
          unsafe_allow_html=True)
 
 # Pilih Pertanyaan
-option = st.selectbox('Pilih Pertanyaan:', ('',
-                      ' Apakah jenis hari (holiday, weekday, workingday) mempengaruhi peminjaman sepeda?', 'Apakah cuaca(weathersit) mempengaruhi peminjaman sepeda?'))
+option = st.selectbox('Pilih Pertanyaan:', [
+    'Pilih Pertanyaan:',
+    'Apakah jenis hari (holiday, weekday, workingday) mempengaruhi peminjaman sepeda?',
+    'Apakah cuaca (weathersit) mempengaruhi peminjaman sepeda?'
+])
 
-if option == 'Apakah cuaca mempengaruhi peminjaman sepeda?':
+if option == 'Apakah cuaca (weathersit) mempengaruhi peminjaman sepeda?':
     # Clustering
     X = day[['weathersit']]
     n_clusters = 3
@@ -34,23 +34,26 @@ if option == 'Apakah cuaca mempengaruhi peminjaman sepeda?':
     day['cluster'] = kmeans.labels_
 
     # Visualisasi histogram peminjaman sepeda berdasarkan cuaca di setiap kluster
-    plt.figure(figsize=(12, 6))
+    fig, axs = plt.subplots(1, n_clusters, figsize=(12, 6))
 
     # Loop melalui setiap kluster
     for cluster in day['cluster'].unique():
-        plt.subplot(1, n_clusters, cluster + 1)
-    plt.hist(day[day['cluster'] == cluster]['weathersit'],
-             bins=4, range=(1, 4), rwidth=0.8)
-    plt.xlabel('Cuaca (weathersit)')
-    plt.ylabel('Jumlah Peminjaman Sepeda')
-    plt.title(f'Kluster {cluster + 1}')
+        axs[cluster].hist(day[day['cluster'] == cluster]['weathersit'],
+                          bins=4, range=(1, 4), rwidth=0.8)
+        axs[cluster].set_xlabel('Cuaca (weathersit)')
+        axs[cluster].set_ylabel('Jumlah Peminjaman Sepeda')
+        axs[cluster].set_title(f'Kluster {cluster + 1}')
     plt.suptitle(
         'Histogram Peminjaman Sepeda Berdasarkan Cuaca di Setiap Kluster')
-    plt.show()
 
-    st.write('Berdasarkan visualisasi data, cuaca (weathersit) mempengaruhi peminjaman sepeda, dimana saat cuaca 1 sepeda paling banyak dipinjam, diikuti cuaca 2, dan cuaca 3 sedikit, cuaca 4 tidak ada peminjaman sepeda.')
+    # Visualisasinya
+    st.pyplot(fig)
 
-elif option == 'Apakah jenis hari (hari libur, hari kerja, dan hari biasa) mempengaruhi peminjaman sepeda?':
+    with st.expander("Lihat penjelasan:"):
+        st.write('Berdasarkan visualisasi data di atas, cuaca (weathersit) mempengaruhi peminjaman sepeda, dimana saat cuaca 1(Clear, Few clouds, Partly cloudy, Partly cloudy) sepeda paling banyak dipinjam, diikuti cuaca 2(Mist + Cloudy, Mist + Broken clouds, Mist + Few clouds, Mist), dan cuaca 3(Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds) sedikit peminjaman, cuaca 4(Heavy Rain + Ice Pallets + Thunderstorm + Mist, Snow + Fog) tidak ada peminjaman sepeda.')
+
+elif option == 'Apakah jenis hari (holiday, weekday, workingday) mempengaruhi peminjaman sepeda?':
+    # Jenis harinya
     day['jenis_hari'] = day.apply(lambda row: 'Hari Libur' if row['holiday'] == 1 else (
         'Hari Kerja' if row['workingday'] == 1 else 'Hari Biasa'), axis=1)
 
@@ -59,10 +62,12 @@ elif option == 'Apakah jenis hari (hari libur, hari kerja, dan hari biasa) mempe
     sns.histplot(data=day, x='cnt', hue='jenis_hari', bins=20, kde=True)
     plt.xlabel('Jumlah Peminjaman Sepeda (cnt)')
     plt.title('Distribusi Jumlah Peminjaman Sepeda berdasarkan Jenis Hari')
-    plt.show()
 
-    st.write('Berdasarkan visualisasi data, jenis hari mempengaruhi peminjaman sepeda. Dimana saat hari kerja peminjaman sepeda banyak dilakukan, diikuti dengan hari biasa dan hari libur.')
+    # Visualisasinya
+    st.pyplot()
+
+    with st.expander("Lihat penjelasan:"):
+        st.write('Berdasarkan visualisasi data, jenis hari mempengaruhi peminjaman sepeda. Dimana saat hari kerja peminjaman sepeda banyak dilakukan, diikuti dengan hari biasa dan hari libur.')
 
 else:
-    # KOSONG
     st.write('')
