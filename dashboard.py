@@ -70,4 +70,16 @@ elif option == 'Apakah jenis hari (holiday, weekday, workingday) mempengaruhi pe
         st.write('Berdasarkan visualisasi data, jenis hari mempengaruhi peminjaman sepeda. Dimana saat hari kerja peminjaman sepeda banyak dilakukan, diikuti dengan hari biasa dan hari libur.')
 
 else:
-    st.write('')
+    st.write('<div style="text-align: center;">Dataset Characteristics',
+             unsafe_allow_html=True)
+    st.write("""
+- instant: record index
+- weekday: day of the week
+- workingday: if day is neither weekend nor holiday is 1, otherwise is 0.
+- weathersit:
+  - 1: Clear, Few clouds, Partly cloudy, Partly cloudy
+  - 2: Mist + Cloudy, Mist + Broken clouds, Mist + Few clouds, Mist
+  - 3: Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds
+  - 4: Heavy Rain + Ice Pallets + Thunderstorm + Mist, Snow + Fog
+- cnt: count of total rental bikes including both casual and registered
+""")
